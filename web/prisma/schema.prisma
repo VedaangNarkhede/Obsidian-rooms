@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String   @unique
+  usernameLower String   @unique // Case-insensitive duplicate check
+  password      String // bcrypt hash
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  vaults        Vault[]
+  apiKeys       ApiKey[]
+  preferences   VaultPreference[]
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  name      String
+  keyHash   String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Vault {
+  id         String      @id @default(uuid())
+  name       String
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  notes       Note[]
+  grants      Grant[]
+  shareLinks  ShareLink[]
+  preferences VaultPreference[]
+
+  @@unique([userId, name])
+}
+
+model Note {
+  id                String           @id @default(uuid())
+  vaultId           String
+  vault             Vault            @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  path              String
+  hash              String // hash of the original markdown
+  contentCiphertext String // encrypted markdown content
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  attachments       NoteAttachment[]
+  outgoingLinks     NoteLink[]       @relation("OutgoingLinks")
+
+  @@unique([vaultId, path])
+}
+
+model NoteLink {
+  id           String   @id @default(uuid())
+  sourceNoteId String
+  sourceNote   Note     @relation("OutgoingLinks", fields: [sourceNoteId], references: [id], onDelete: Cascade)
+  targetPath   String // The unresolved path or display name of the link
+  createdAt    DateTime @default(now())
+
+  // Note: We don't strictly link targetNoteId because the target note might not exist yet!
+  // This allows graph rendering to show missing nodes.
+
+  @@unique([sourceNoteId, targetPath])
+}
+
+model Attachment {
+  id        String           @id @default(uuid())
+  hash      String           @unique
+  url       String // Storage URL
+  createdAt DateTime         @default(now())
+  notes     NoteAttachment[]
+}
+
+model NoteAttachment {
+  noteId       String
+  attachmentId String
+  filename     String // The name used in the markdown (e.g. "image.png")
+  note         Note       @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, attachmentId])
+}
+
+model Grant {
+  id           String   @id @default(uuid())
+  vaultId      String
+  vault        Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  email        String // The email of the person granted access
+  grantAll     Boolean  @default(true)
+  grantedPaths String? // JSON string array of paths (e.g., '["note1.md", "folder/note2.md"]')
+  createdAt    DateTime @default(now())
+
+  @@unique([vaultId, email])
+}
+
+model VaultPreference {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vaultId   String
+  vault     Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  nickname  String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, vaultId])
+}
+
+model ShareLink {
+  id         String    @id @default(uuid())
+  vaultId    String
+  vault      Vault     @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  targetPath String? // If null, shares the whole vault. If set to a path, restricts to that note or folder.
+  password   String? // Optional bcrypt hashed password
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+}

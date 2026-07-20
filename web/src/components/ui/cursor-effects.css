@@ -1,0 +1,23 @@
+.cosmic-canvas { position:fixed; inset:0; z-index:0; pointer-events:none; background:radial-gradient(ellipse at 52% 30%, rgba(30,45,80,.38) 0%, rgba(7,10,18,.82) 42%, #020305 76%); }
+.cosmic-canvas-3d { background: radial-gradient(ellipse at 50% 42%, rgba(48,73,118,.34) 0%, rgba(17,27,48,.26) 22%, rgba(7,10,18,.78) 52%, #020305 82%); }
+.cosmic-canvas-3d::after { content:''; }
+.mystic-cursor,.mystic-cursor-halo { position:fixed; left:0; top:0; z-index:1000; pointer-events:none; opacity:0; will-change:transform; transition:opacity .25s ease; }
+.mystic-cursor.visible,.mystic-cursor-halo.visible { opacity:1; }
+.mystic-cursor { width:15px; height:15px; display:grid; place-items:center; filter:drop-shadow(0 0 7px rgba(255,175,57,.95)) drop-shadow(0 0 18px rgba(97,165,255,.5)); }
+.mystic-cursor span { position:absolute; width:6px; height:6px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#fffce8 0 14%,#ffd676 32%,#ef8b35 64%,rgba(80,129,255,.45) 78%,transparent 82%); box-shadow:0 0 7px #ffc45d,0 0 16px rgba(75,139,255,.75); transition:transform .2s ease; }
+.mystic-cursor i,.mystic-cursor b { position:absolute; width:100%; height:1px; background:linear-gradient(90deg,transparent,#ffe8ac,transparent); transform:rotate(45deg); opacity:.8; }
+.mystic-cursor b { transform:rotate(-45deg); }
+.mystic-cursor::before,.mystic-cursor::after { content:''; position:absolute; border:1px solid rgba(255,196,91,.48); border-radius:50%; inset:-4px; animation:cursor-orbit 4.5s linear infinite; }
+.mystic-cursor::after { inset:-9px; border-color:rgba(91,154,255,.26); border-left-color:transparent; animation-direction:reverse; animation-duration:6s; }
+.mystic-cursor-halo { width:48px; height:48px; border-radius:50%; background:radial-gradient(circle,rgba(255,180,64,.11),rgba(86,130,255,.06) 36%,transparent 70%); border:1px solid rgba(145,175,255,.13); box-shadow:inset 0 0 15px rgba(255,172,56,.05),0 0 24px rgba(69,112,215,.07); transition:opacity .25s ease,width .22s ease,height .22s ease,border-color .22s ease; }
+.mystic-cursor-halo i { position:absolute; width:3px; height:3px; border-radius:50%; background:#ffc568; box-shadow:0 0 7px #ffae42; top:3px; left:22px; animation:halo-orbit 3.2s linear infinite; transform-origin:2px 21px; }
+.mystic-cursor-halo i:last-child { top:41px; background:#75b9ff; box-shadow:0 0 7px #589fff; animation-direction:reverse; animation-duration:4.2s; }
+.mystic-cursor.hovering span { transform:scale(1.6); }
+.mystic-cursor.hovering::before { inset:-8px; border-color:rgba(255,207,119,.7); }
+.mystic-cursor-halo.hovering { width:62px; height:62px; border-color:rgba(255,194,86,.27); background:radial-gradient(circle,rgba(255,180,64,.14),rgba(74,124,255,.07) 44%,transparent 72%); }
+.mystic-cursor.pressed span { transform:scale(.6); }
+.mystic-cursor-halo.pressed { width:36px; height:36px; }
+@keyframes cursor-orbit { to { transform:rotate(360deg); } }
+@keyframes halo-orbit { to { transform:rotate(360deg); } }
+@media (pointer:fine) { .cosmic-cursor-active,.cosmic-cursor-active body,.cosmic-cursor-active button,.cosmic-cursor-active a,.cosmic-cursor-active input { cursor:none!important; } }
+@media (pointer:coarse),(prefers-reduced-motion:reduce) { .mystic-cursor,.mystic-cursor-halo { display:none; } }

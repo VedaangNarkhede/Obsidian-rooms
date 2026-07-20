@@ -1,0 +1,87 @@
+.dashboardContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: transparent;
+    color: #e9ecf4;
+    font-family: 'Manrope', sans-serif;
+    position: relative;
+    z-index: 1;
+}
+
+.topNav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    height: 56px;
+    background-color: #1e1e1e;
+    border-bottom: 1px solid #2d2d2d;
+    flex-shrink: 0;
+}
+
+.navLeft {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.logo {
+    color: #e5c07b;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+
+.vaultSwitcher {
+    display: flex;
+    gap: 1rem;
+}
+
+.vaultLink {
+    color: #a0a0a0;
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.vaultLink:hover {
+    color: #ffffff;
+    background-color: #2c313a;
+}
+
+.navRight {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.username {
+    color: #98c379;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.settingsLink, .logoutLink {
+    color: #a0a0a0;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.settingsLink:hover {
+    color: #61afef;
+}
+
+.logoutLink:hover {
+    color: #e06c75;
+}
+
+.mainContent {
+    display: flex;
+    flex: 1;
+    overflow-y: auto;
+}

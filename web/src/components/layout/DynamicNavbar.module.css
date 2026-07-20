@@ -1,0 +1,124 @@
+.topNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5vw;
+  height: 66px;
+  background: rgba(3, 5, 9, 0.68);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(183, 203, 238, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f2c980;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  letter-spacing: 0.01em;
+}
+
+.logo::before {
+  content: '◆';
+  font-size: 12px;
+  color: #ffe3a9;
+  filter: drop-shadow(0 0 7px #f5ac48);
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: #abb2bf;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.tab:hover {
+  background-color: #282c34;
+  color: #fff;
+}
+
+.activeTab {
+  background-color: #2c313a;
+  color: #61afef;
+  font-weight: 500;
+  border: 1px solid #3e4451;
+}
+
+.searchContainer {
+  position: relative;
+  margin-left: 1rem;
+}
+
+.searchInput {
+  background-color: #1a1c23;
+  border: 1px solid #3e4451;
+  color: #abb2bf;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  width: 250px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.searchInput::placeholder {
+  color: #5c6370;
+}
+
+.searchInput:focus {
+  border-color: #61afef;
+  box-shadow: 0 0 0 2px rgba(97, 175, 239, 0.2);
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.username {
+  color: #abb2bf;
+  font-weight: 500;
+}
+
+.settingsLink,
+.logoutLink {
+  color: #abb2bf;
+  text-decoration: none;
+  transition: color 0.2s;
+  font-size: 0.9rem;
+}
+
+.settingsLink:hover {
+  color: #61afef;
+}
+
+.logoutLink:hover {
+  color: #e06c75;
+}

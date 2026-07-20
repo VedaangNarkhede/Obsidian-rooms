@@ -1,0 +1,308 @@
+.heroSection {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    overflow: hidden;
+    color: #fff;
+    padding: 0 2rem;
+}
+
+.heroBackground {
+    display: none;
+}
+
+@keyframes rotateSlowly {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(26, 28, 35, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navLinks {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.navLogo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #e5c07b;
+    text-decoration: none;
+}
+
+.navBtn {
+    padding: 0.5rem 1.2rem;
+    border-radius: 20px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.navBtnPrimary {
+    background: #61afef;
+    color: #1a1c23;
+}
+
+.navBtnPrimary:hover {
+    background: #4a98d3;
+    transform: translateY(-2px);
+}
+
+.navBtnSecondary {
+    background: transparent;
+    color: #abb2bf;
+    border: 1px solid #5c6370;
+}
+
+.navBtnSecondary:hover {
+    color: #fff;
+    border-color: #fff;
+}
+
+.heroContent {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 800px;
+    animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+@keyframes slideUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.title {
+    font-size: 4.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #e5c07b, #d19a66);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    color: #abb2bf;
+    margin-bottom: 3rem;
+    line-height: 1.5;
+}
+
+.scrollIndicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: bounce 2s infinite;
+    color: #5c6370;
+    font-size: 1.5rem;
+    z-index: 1;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+    40% { transform: translateY(-20px) translateX(-50%); }
+    60% { transform: translateY(-10px) translateX(-50%); }
+}
+
+.featureSection {
+    background-color: transparent;
+    padding: 6rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8rem;
+}
+
+.featureRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.featureRowReverse {
+    flex-direction: row-reverse;
+}
+
+.featureText {
+    flex: 1;
+}
+
+.featureTitle {
+    font-size: 2.5rem;
+    color: #61afef;
+    margin-bottom: 1.5rem;
+}
+
+.featureDesc {
+    font-size: 1.2rem;
+    color: #abb2bf;
+    line-height: 1.6;
+}
+
+.featureVisual {
+    flex: 1;
+    position: relative;
+    height: 400px;
+    background: #1e2227;
+    border-radius: 12px;
+    border: 1px solid #3e4451;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Static Graph UI Mockup */
+.graphNode {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #e5c07b;
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(229, 192, 123, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.graphLabel {
+    position: absolute;
+    bottom: -25px;
+    color: #abb2bf;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    background: rgba(40, 44, 52, 0.8);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.graphLine {
+    position: absolute;
+    background: #5c6370;
+    height: 2px;
+    transform-origin: left center;
+}
+
+/* Static Reading View Mockup */
+.readingMockup {
+    width: 90%;
+    height: 85%;
+    background: #282c34;
+    border-radius: 8px;
+    padding: 2.5rem;
+    color: #abb2bf;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
+    border: 1px solid #3e4451;
+}
+
+.mockTitle {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #61afef;
+    margin-bottom: 0.5rem;
+}
+
+.mockText {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #d7dae0;
+}
+
+.mockCodeBlock {
+    background: #1e2227;
+    border-radius: 6px;
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 0.9rem;
+    border: 1px solid #3e4451;
+    color: #98c379;
+}
+
+.mockLink {
+    color: #e5c07b;
+    text-decoration: underline;
+}
+
+.ctaSection {
+    background-color: transparent;
+    padding: 8rem 2rem;
+    text-align: center;
+    border-top: 1px solid #333;
+}
+
+.ctaTitle {
+    font-size: 3rem;
+    color: #ffffff;
+    margin-bottom: 3rem;
+}
+
+.ctaButtons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.btnLarge {
+    padding: 1rem 2.5rem;
+    font-size: 1.2rem;
+    border-radius: 30px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btnLargePrimary {
+    background: #98c379;
+    color: #1a1c23;
+}
+
+.btnLargePrimary:hover {
+    background: #7cb559;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(152, 195, 121, 0.3);
+}
+
+.btnLargeSecondary {
+    background: transparent;
+    color: #61afef;
+    border: 2px solid #61afef;
+}
+
+.btnLargeSecondary:hover {
+    background: rgba(97, 175, 239, 0.1);
+    transform: translateY(-3px);
+}

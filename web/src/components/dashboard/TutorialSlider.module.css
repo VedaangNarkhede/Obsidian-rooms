@@ -1,0 +1,134 @@
+.sliderContainer {
+  background-color: #1e1e1e;
+  border: 1px solid #2d2d2d;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.slidesTrack {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  width: 100%;
+}
+
+.slide {
+  min-width: 100%;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.slideTitle {
+  color: #e5c07b;
+  font-size: 1.6rem;
+  margin-bottom: 0.2rem;
+}
+
+.slideSubtitle {
+  color: #abb2bf;
+  font-size: 1rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.slideContent {
+  background: #282c34;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #3e4451;
+  width: 100%;
+  max-width: 500px;
+  color: #d7dae0;
+  line-height: 1.6;
+}
+
+.stepsList {
+  text-align: left;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+  list-style-type: decimal;
+}
+
+.stepsList li {
+  margin-bottom: 0.5rem;
+}
+
+.hint {
+  color: #5c6370;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.actionBtn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.8rem 1.5rem;
+  background-color: #61afef;
+  color: #282c34;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.actionBtn:hover {
+  background-color: #4da3eb;
+  transform: translateY(-2px);
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #1a1c23;
+  border-top: 1px solid #2d2d2d;
+}
+
+.controlBtn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #abb2bf;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.controlBtn:hover:not(:disabled) {
+  background: #2c313a;
+  color: #fff;
+  border-color: #555;
+}
+
+.controlBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #444;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.activeDot {
+  background-color: #61afef;
+  box-shadow: 0 0 8px rgba(97, 175, 239, 0.5);
+}
