@@ -91,7 +91,7 @@ export default class ObsidianRoomsPlugin extends Plugin {
 			}
 
 			progress.updateProgress("Sending manifest to server...", 30);
-			const manifestRes = await fetch(`http://localhost:3000/api/sync/manifest`, {
+			const manifestRes = await fetch(`https://obsidian-rooms.vercel.app/api/sync/manifest`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -191,7 +191,7 @@ export default class ObsidianRoomsPlugin extends Plugin {
 			}
 			
 			progress.updateProgress("Uploading data to Obsidian Rooms...", 80);
-			const uploadRes = await fetch(`http://localhost:3000/api/sync/upload`, {
+			const uploadRes = await fetch(`https://obsidian-rooms.vercel.app/api/sync/upload`, {
 				method: 'POST',
 				body: formData
 			});
