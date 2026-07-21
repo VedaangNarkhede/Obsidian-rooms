@@ -27,7 +27,7 @@ __export(main_exports, {
   default: () => ObsidianRoomsPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian4 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/core/subgraph.ts
 function computeSubgraph(linkGraph, startPath, depth) {
@@ -139,13 +139,124 @@ var SelectionModal = class extends import_obsidian.Modal {
   }
 };
 
-// src/settings.ts
+// src/modals/FetchLocationModal.ts
+var import_obsidian3 = require("obsidian");
+
+// src/modals/VaultPromptModal.ts
 var import_obsidian2 = require("obsidian");
-var DEFAULT_SETTINGS = {
-  apiKey: "",
-  targetVaultName: ""
+var VaultPromptModal = class extends import_obsidian2.Modal {
+  constructor(app, initialVaultName, initialQuickAccessName, onSubmit) {
+    super(app);
+    this.vaultName = "";
+    this.quickAccessName = "";
+    this.vaultName = initialVaultName || "";
+    this.quickAccessName = initialQuickAccessName || "";
+    this.onSubmit = onSubmit;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h2", { text: "Sync to Obsidian Rooms" });
+    new import_obsidian2.Setting(contentEl).setName("Vault Name").setDesc("Enter the name of the vault to sync these notes to.").addText((text) => {
+      text.setPlaceholder("e.g. My Vault");
+      if (this.vaultName) text.setValue(this.vaultName);
+      text.onChange((value) => {
+        this.vaultName = value.trim();
+      });
+    });
+    const quickAccessSetting = new import_obsidian2.Setting(contentEl).setName("Quick Access Name (Optional)").setDesc("Category or subfolder for these notes. If provided, notes will be saved under vault_name/quick_access_name/.").addText((text) => {
+      text.setPlaceholder("e.g. cryptography");
+      if (this.quickAccessName) text.setValue(this.quickAccessName);
+      text.onChange((value) => {
+        this.quickAccessName = value.trim();
+      });
+    });
+    const warningEl = contentEl.createEl("p", {
+      text: "Warning: All scanned files will be synced under this subfolder within the vault.",
+      cls: "setting-item-description"
+    });
+    warningEl.style.color = "var(--text-warning)";
+    warningEl.style.marginTop = "-10px";
+    warningEl.style.marginBottom = "20px";
+    const buttonContainer = contentEl.createDiv();
+    buttonContainer.style.display = "flex";
+    buttonContainer.style.justifyContent = "flex-end";
+    buttonContainer.style.marginTop = "1rem";
+    const submitBtn = new import_obsidian2.ButtonComponent(buttonContainer).setButtonText("Continue").setCta().onClick(() => {
+      if (!this.vaultName) {
+        return;
+      }
+      this.close();
+      this.onSubmit(this.vaultName, this.quickAccessName);
+    });
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
 };
-var ObsidianRoomsSettingTab = class extends import_obsidian2.PluginSettingTab {
+
+// src/modals/FetchLocationModal.ts
+var FetchLocationModal = class extends import_obsidian3.Modal {
+  constructor(app, apiKey, notePath, onNext) {
+    super(app);
+    this.apiKey = apiKey;
+    this.notePath = notePath;
+    this.onNext = onNext;
+  }
+  async onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h2", { text: "Checking Remote Status..." });
+    const statusEl = contentEl.createEl("p", { text: "Scanning server to see if this note is already synced..." });
+    statusEl.style.marginBottom = "1.5rem";
+    try {
+      const res = await fetch(`https://obsidian-rooms.vercel.app/api/sync/locate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: this.apiKey, notePath: this.notePath })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.found) {
+          statusEl.innerText = `Note found remotely!
+Vault: ${data.vaultName}
+Folder: ${data.quickAccessName || "(Root)"}`;
+          statusEl.style.color = "var(--text-accent)";
+          this.createNextButton(data.vaultName, data.quickAccessName);
+        } else {
+          statusEl.innerText = `Note not found remotely. You can create a new sync entry.`;
+          statusEl.style.color = "var(--text-muted)";
+          this.createNextButton("", "");
+        }
+      } else {
+        statusEl.innerText = `Failed to contact server.`;
+        this.createNextButton("", "");
+      }
+    } catch (err) {
+      statusEl.innerText = `Network error while checking remote status.`;
+      this.createNextButton("", "");
+    }
+  }
+  createNextButton(prefillVault, prefillFolder) {
+    const btnContainer = this.contentEl.createDiv();
+    btnContainer.style.display = "flex";
+    btnContainer.style.justifyContent = "flex-end";
+    btnContainer.style.marginTop = "1rem";
+    new import_obsidian3.ButtonComponent(btnContainer).setButtonText("Next").setCta().onClick(() => {
+      this.close();
+      new VaultPromptModal(this.app, prefillVault, prefillFolder, this.onNext).open();
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
+// src/settings.ts
+var import_obsidian4 = require("obsidian");
+var DEFAULT_SETTINGS = {
+  apiKey: ""
+};
+var ObsidianRoomsSettingTab = class extends import_obsidian4.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -154,7 +265,7 @@ var ObsidianRoomsSettingTab = class extends import_obsidian2.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Obsidian Rooms Settings" });
-    new import_obsidian2.Setting(containerEl).setName("API Key").setDesc("Your personal API key generated from the Obsidian Rooms dashboard.").addText((text) => {
+    new import_obsidian4.Setting(containerEl).setName("API Key").setDesc("Your personal API key generated from the Obsidian Rooms dashboard.").addText((text) => {
       text.setPlaceholder("Enter your API key");
       text.inputEl.type = "password";
       text.setValue(this.plugin.settings.apiKey);
@@ -163,16 +274,12 @@ var ObsidianRoomsSettingTab = class extends import_obsidian2.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian2.Setting(containerEl).setName("Target Vault Name").setDesc('The name of the remote vault on Obsidian Rooms you want to sync notes to (e.g. "My Notes").').addText((text) => text.setPlaceholder("e.g. My Notes").setValue(this.plugin.settings.targetVaultName).onChange(async (value) => {
-      this.plugin.settings.targetVaultName = value;
-      await this.plugin.saveSettings();
-    }));
   }
 };
 
 // src/modals/SyncProgressModal.ts
-var import_obsidian3 = require("obsidian");
-var SyncProgressModal = class extends import_obsidian3.Modal {
+var import_obsidian5 = require("obsidian");
+var SyncProgressModal = class extends import_obsidian5.Modal {
   constructor(app) {
     super(app);
   }
@@ -215,7 +322,7 @@ var SyncProgressModal = class extends import_obsidian3.Modal {
 };
 
 // src/main.ts
-var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
+var ObsidianRoomsPlugin = class extends import_obsidian6.Plugin {
   async onload() {
     console.log("loading Obsidian Rooms plugin");
     await this.loadSettings();
@@ -227,7 +334,13 @@ var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
         const activeFile = this.app.workspace.getActiveFile();
         if (activeFile) {
           if (!checking) {
-            this.openSelectionModal(activeFile);
+            if (!this.settings.apiKey) {
+              new import_obsidian6.Notice("Please configure your API Key in settings first.");
+              return true;
+            }
+            new FetchLocationModal(this.app, this.settings.apiKey, activeFile.path, (vaultName, quickAccessName) => {
+              this.openSelectionModal(activeFile, vaultName, quickAccessName);
+            }).open();
           }
           return true;
         }
@@ -235,7 +348,7 @@ var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
       }
     });
   }
-  openSelectionModal(file) {
+  openSelectionModal(file, vaultName, quickAccessName) {
     const depth = 0;
     const linkGraph = {};
     for (const [source, links] of Object.entries(this.app.metadataCache.resolvedLinks)) {
@@ -243,7 +356,7 @@ var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
     }
     const result = computeSubgraph(linkGraph, file.path, depth);
     new SelectionModal(this.app, result.notes, result.attachments, linkGraph, (notes, attachments) => {
-      this.syncToWeb(notes, attachments);
+      this.syncToWeb(notes, attachments, vaultName, quickAccessName);
     }).open();
   }
   async hashFile(file) {
@@ -252,16 +365,11 @@ var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
-  async syncToWeb(notes, attachments) {
-    var _a, _b;
+  async syncToWeb(notes, attachments, vaultName, quickAccessName) {
+    var _a;
     const apiKey = this.settings.apiKey;
     if (!apiKey) {
-      new import_obsidian4.Notice("Please configure your API Key in settings.");
-      return;
-    }
-    const vaultName = this.settings.targetVaultName;
-    if (!vaultName) {
-      new import_obsidian4.Notice("Please configure your Target Vault Name in settings.");
+      new import_obsidian6.Notice("Please configure your API Key in settings.");
       return;
     }
     const progress = new SyncProgressModal(this.app);
@@ -269,19 +377,20 @@ var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
     try {
       progress.updateProgress("Computing hashes...", 10);
       const noteManifest = [];
+      const prefix = quickAccessName ? `${quickAccessName}/` : "";
       for (const path of notes) {
         const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof import_obsidian4.TFile) {
+        if (file instanceof import_obsidian6.TFile) {
           const hash = await this.hashFile(file);
-          noteManifest.push({ path, hash });
+          noteManifest.push({ path: prefix + path, localPath: path, hash });
         }
       }
       const attachmentManifest = [];
       for (const path of attachments) {
         const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof import_obsidian4.TFile) {
+        if (file instanceof import_obsidian6.TFile) {
           const hash = await this.hashFile(file);
-          attachmentManifest.push({ path, hash });
+          attachmentManifest.push({ path: prefix + path, localPath: path, hash });
         }
       }
       progress.updateProgress("Sending manifest to server...", 30);
@@ -291,8 +400,8 @@ var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
         body: JSON.stringify({
           apiKey,
           vaultName,
-          notes: noteManifest,
-          attachments: attachmentManifest
+          notes: noteManifest.map((n) => ({ path: n.path, hash: n.hash })),
+          attachments: attachmentManifest.map((a) => ({ path: a.path, hash: a.hash }))
         })
       });
       if (!manifestRes.ok) {
@@ -323,42 +432,44 @@ var ObsidianRoomsPlugin = class extends import_obsidian4.Plugin {
         const linkedAttachmentPaths = Object.keys(links).filter((p) => attachments.includes(p));
         const mapForNote = {};
         for (const p of linkedAttachmentPaths) {
-          const hash = (_a = attachmentManifest.find((a) => a.path === p)) == null ? void 0 : _a.hash;
+          const hash = (_a = attachmentManifest.find((a) => a.localPath === p)) == null ? void 0 : _a.hash;
           if (hash) {
             const filename = p.split("/").pop() || p;
             mapForNote[filename] = hash;
           }
         }
-        noteAttachmentMap[path] = mapForNote;
+        noteAttachmentMap[prefix + path] = mapForNote;
         const outgoingLinks = /* @__PURE__ */ new Set();
         for (const target of Object.keys(links)) {
           if (target.endsWith(".md")) {
-            outgoingLinks.add(target);
+            outgoingLinks.add(prefix + target);
           }
         }
         const unresolved = this.app.metadataCache.unresolvedLinks[path] || {};
         for (const target of Object.keys(unresolved)) {
-          outgoingLinks.add(target);
+          outgoingLinks.add(prefix + target);
         }
-        noteLinks[path] = Array.from(outgoingLinks);
+        noteLinks[prefix + path] = Array.from(outgoingLinks);
       }
       formData.append("noteAttachmentMap", JSON.stringify(noteAttachmentMap));
       formData.append("noteLinks", JSON.stringify(noteLinks));
       for (const path of neededNotes) {
-        const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof import_obsidian4.TFile) {
-          const content = await this.app.vault.read(file);
-          const hash = ((_b = noteManifest.find((n) => n.path === path)) == null ? void 0 : _b.hash) || "";
-          formData.append("notePaths", path);
-          formData.append("noteHashes", hash);
-          formData.append("noteContents", content);
+        const entry = noteManifest.find((n) => n.path === path);
+        if (entry) {
+          const file = this.app.vault.getAbstractFileByPath(entry.localPath);
+          if (file instanceof import_obsidian6.TFile) {
+            const content = await this.app.vault.read(file);
+            formData.append("notePaths", path);
+            formData.append("noteHashes", entry.hash);
+            formData.append("noteContents", content);
+          }
         }
       }
       for (const hash of neededAttachments) {
         const entry = attachmentManifest.find((a) => a.hash === hash);
         if (entry) {
-          const file = this.app.vault.getAbstractFileByPath(entry.path);
-          if (file instanceof import_obsidian4.TFile) {
+          const file = this.app.vault.getAbstractFileByPath(entry.localPath);
+          if (file instanceof import_obsidian6.TFile) {
             const buffer = await this.app.vault.readBinary(file);
             const blob = new Blob([buffer]);
             formData.append("attachmentPaths", entry.path);

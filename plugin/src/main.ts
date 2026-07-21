@@ -1,6 +1,8 @@
 import { Plugin, Notice, TFile } from 'obsidian';
 import { computeSubgraph } from './core/subgraph';
 import { SelectionModal } from './modals/SelectionModal';
+import { VaultPromptModal } from './modals/VaultPromptModal';
+import { FetchLocationModal } from './modals/FetchLocationModal';
 import { ObsidianRoomsSettingTab, DEFAULT_SETTINGS, ObsidianRoomsSettings } from './settings';
 import { SyncProgressModal } from './modals/SyncProgressModal';
 
@@ -23,7 +25,13 @@ export default class ObsidianRoomsPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
 					if (!checking) {
-						this.openSelectionModal(activeFile);
+						if (!this.settings.apiKey) {
+							new Notice("Please configure your API Key in settings first.");
+							return true;
+						}
+						new FetchLocationModal(this.app, this.settings.apiKey, activeFile.path, (vaultName, quickAccessName) => {
+							this.openSelectionModal(activeFile, vaultName, quickAccessName);
+						}).open();
 					}
 					return true;
 				}
@@ -32,7 +40,7 @@ export default class ObsidianRoomsPlugin extends Plugin {
 		});
 	}
 
-	openSelectionModal(file: TFile) {
+	openSelectionModal(file: TFile, vaultName: string, quickAccessName: string) {
 		const depth = 0; // Infinite traversal
 		
 		const linkGraph: Record<string, string[]> = {};
@@ -43,7 +51,7 @@ export default class ObsidianRoomsPlugin extends Plugin {
 		const result = computeSubgraph(linkGraph, file.path, depth);
 		
 		new SelectionModal(this.app, result.notes, result.attachments, linkGraph, (notes, attachments) => {
-			this.syncToWeb(notes, attachments);
+			this.syncToWeb(notes, attachments, vaultName, quickAccessName);
 		}).open();
 	}
 
@@ -54,16 +62,10 @@ export default class ObsidianRoomsPlugin extends Plugin {
 		return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 	}
 
-	async syncToWeb(notes: string[], attachments: string[]) {
+	async syncToWeb(notes: string[], attachments: string[], vaultName: string, quickAccessName: string) {
 		const apiKey = this.settings.apiKey;
 		if (!apiKey) {
 			new Notice("Please configure your API Key in settings.");
-			return;
-		}
-		
-		const vaultName = this.settings.targetVaultName;
-		if (!vaultName) {
-			new Notice("Please configure your Target Vault Name in settings.");
 			return;
 		}
 
@@ -73,11 +75,13 @@ export default class ObsidianRoomsPlugin extends Plugin {
 		try {
 			progress.updateProgress("Computing hashes...", 10);
 			const noteManifest = [];
+			const prefix = quickAccessName ? `${quickAccessName}/` : '';
+
 			for (const path of notes) {
 				const file = this.app.vault.getAbstractFileByPath(path);
 				if (file instanceof TFile) {
 					const hash = await this.hashFile(file);
-					noteManifest.push({ path, hash });
+					noteManifest.push({ path: prefix + path, localPath: path, hash });
 				}
 			}
 			
@@ -86,7 +90,7 @@ export default class ObsidianRoomsPlugin extends Plugin {
 				const file = this.app.vault.getAbstractFileByPath(path);
 				if (file instanceof TFile) {
 					const hash = await this.hashFile(file);
-					attachmentManifest.push({ path, hash });
+					attachmentManifest.push({ path: prefix + path, localPath: path, hash });
 				}
 			}
 
@@ -97,8 +101,8 @@ export default class ObsidianRoomsPlugin extends Plugin {
 				body: JSON.stringify({
 					apiKey,
 					vaultName,
-					notes: noteManifest,
-					attachments: attachmentManifest
+					notes: noteManifest.map(n => ({ path: n.path, hash: n.hash })),
+					attachments: attachmentManifest.map(a => ({ path: a.path, hash: a.hash }))
 				})
 			});
 
@@ -136,13 +140,13 @@ export default class ObsidianRoomsPlugin extends Plugin {
 				const linkedAttachmentPaths = Object.keys(links).filter(p => attachments.includes(p));
                 const mapForNote: Record<string, string> = {};
 				for (const p of linkedAttachmentPaths) {
-                    const hash = attachmentManifest.find(a => a.path === p)?.hash;
+                    const hash = attachmentManifest.find(a => a.localPath === p)?.hash;
                     if (hash) {
                         const filename = p.split('/').pop() || p;
                         mapForNote[filename] = hash;
                     }
                 }
-				noteAttachmentMap[path] = mapForNote;
+				noteAttachmentMap[prefix + path] = mapForNote;
 
                 // 2. Build Note Links Map (Graph Topology)
                 const outgoingLinks = new Set<string>();
@@ -150,36 +154,38 @@ export default class ObsidianRoomsPlugin extends Plugin {
                 // Add resolved links (only note links, not attachments)
                 for (const target of Object.keys(links)) {
                     if (target.endsWith('.md')) {
-                        outgoingLinks.add(target);
+                        outgoingLinks.add(prefix + target);
                     }
                 }
                 
                 // Add unresolved links (links to notes that don't exist yet)
                 const unresolved = this.app.metadataCache.unresolvedLinks[path] || {};
                 for (const target of Object.keys(unresolved)) {
-                    outgoingLinks.add(target);
+                    outgoingLinks.add(prefix + target);
                 }
 
-                noteLinks[path] = Array.from(outgoingLinks);
+                noteLinks[prefix + path] = Array.from(outgoingLinks);
 			}
 			formData.append('noteAttachmentMap', JSON.stringify(noteAttachmentMap));
             formData.append('noteLinks', JSON.stringify(noteLinks));
 
 			for (const path of neededNotes) {
-				const file = this.app.vault.getAbstractFileByPath(path);
-				if (file instanceof TFile) {
-					const content = await this.app.vault.read(file);
-					const hash = noteManifest.find(n => n.path === path)?.hash || '';
-					formData.append('notePaths', path);
-					formData.append('noteHashes', hash);
-					formData.append('noteContents', content);
+				const entry = noteManifest.find(n => n.path === path);
+				if (entry) {
+					const file = this.app.vault.getAbstractFileByPath(entry.localPath);
+					if (file instanceof TFile) {
+						const content = await this.app.vault.read(file);
+						formData.append('notePaths', path);
+						formData.append('noteHashes', entry.hash);
+						formData.append('noteContents', content);
+					}
 				}
 			}
 
 			for (const hash of neededAttachments) {
 				const entry = attachmentManifest.find(a => a.hash === hash);
 				if (entry) {
-					const file = this.app.vault.getAbstractFileByPath(entry.path);
+					const file = this.app.vault.getAbstractFileByPath(entry.localPath);
 					if (file instanceof TFile) {
 						const buffer = await this.app.vault.readBinary(file);
 						const blob = new Blob([buffer]);
@@ -189,7 +195,6 @@ export default class ObsidianRoomsPlugin extends Plugin {
 					}
 				}
 			}
-			
 			progress.updateProgress("Uploading data to Obsidian Rooms...", 80);
 			const uploadRes = await fetch(`https://obsidian-rooms.vercel.app/api/sync/upload`, {
 				method: 'POST',

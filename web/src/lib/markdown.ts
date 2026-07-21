@@ -1,6 +1,9 @@
 export function preprocessObsidianMarkdown(content: string, attachmentMap: Record<string, string> = {}): string {
     let md = content;
 
+    // 0. Process Horizontal Rules explicitly to avoid markdown parsing weirdness
+    md = md.replace(/^---[\s]*$/gm, '\n\n<hr/>\n\n');
+
     // 1. Process Obsidian Highlights: ==text== -> <mark>text</mark>
     md = md.replace(/==(.*?)==/g, '<mark>$1</mark>');
 
@@ -75,7 +78,10 @@ export function preprocessObsidianMarkdown(content: string, attachmentMap: Recor
         else if (typeLower === 'formula' || typeLower === 'math') icon = '✏️';
         
         const bodyLines = lines.slice(1).map(l => l.replace(/^>\s?/, ''));
-        const body = bodyLines.join('\n');
+        let body = bodyLines.join('\n');
+        
+        // Ensure HRs inside callouts don't break the HTML block context
+        body = body.replace(/^---[\s]*$/gm, '\n\n<hr/>\n\n');
         
         return `<div class="obsidian-callout obsidian-callout-${typeLower}">
             <div class="callout-title"><span class="callout-icon">${icon}</span> ${title.trim() || type}</div>
@@ -95,7 +101,7 @@ export function preprocessObsidianMarkdown(content: string, attachmentMap: Recor
         }
 
         const safeTarget = encodeURIComponent(target.trim());
-        return `[${displayText.trim()}](/notes/${safeTarget})`;
+        return `<a href="${safeTarget}" class="internal-link">${displayText.trim()}</a>`;
     });
 
     return md;

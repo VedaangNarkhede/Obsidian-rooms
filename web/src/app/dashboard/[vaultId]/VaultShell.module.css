@@ -103,3 +103,109 @@
     font-style: italic;
     font-size: 0.85rem;
 }
+
+/* Folder styles */
+.folderList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.folderGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.folderHeader {
+    color: #e5c07b;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    user-select: none;
+}
+
+/* Graph Fullscreen */
+.fullscreenOverlay {
+    position: fixed !important;
+    top: 66px; /* Below top nav */
+    right: 0;
+    bottom: 0;
+    left: 250px; /* Right of left sidebar */
+    width: auto !important;
+    z-index: 100;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+}
+
+.mobileToggleBar {
+    display: none;
+}
+
+.mobileOnlyBtn {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .shell {
+        position: relative;
+    }
+    
+    .leftSidebar {
+        position: fixed;
+        left: -250px;
+        top: 66px;
+        bottom: 0;
+        z-index: 100;
+        transition: left 0.3s ease;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+    }
+    
+    .leftSidebar.open {
+        left: 0;
+    }
+    
+    .rightSidebar {
+        position: fixed;
+        right: -300px;
+        top: 66px;
+        bottom: 0;
+        z-index: 100;
+        transition: right 0.3s ease;
+        box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+    }
+    
+    .rightSidebar.open {
+        right: 0;
+    }
+    
+    .fullscreenOverlay {
+        left: 0 !important;
+        top: 66px !important;
+        right: 0 !important;
+        width: 100% !important;
+    }
+
+    .mobileToggleBar {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 1rem;
+        background-color: #1e1e1e;
+        border-bottom: 1px solid #2d2d2d;
+    }
+    
+    .mobileBtn {
+        background: transparent;
+        border: 1px solid #444;
+        color: #abb2bf;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+    
+    .mobileOnlyBtn {
+        display: block;
+    }
+}
+

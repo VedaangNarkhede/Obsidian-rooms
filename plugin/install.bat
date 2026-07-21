@@ -13,9 +13,6 @@ if %vault_path:~-1%==\ set vault_path=%vault_path:~0,-1%
 
 set plugin_dir="%vault_path%\.obsidian\plugins\obsidian-rooms"
 
-echo.
-echo Installing to %plugin_dir%...
-echo.
 
 if not exist "%vault_path%\.obsidian" (
     echo Error: Could not find .obsidian folder in that path.
@@ -26,9 +23,9 @@ if not exist "%vault_path%\.obsidian" (
 
 if not exist %plugin_dir% mkdir %plugin_dir%
 
-copy /Y main.js %plugin_dir%\
-copy /Y manifest.json %plugin_dir%\
-copy /Y styles.css %plugin_dir%\
+copy /Y main.js %plugin_dir%\ > nul
+copy /Y manifest.json %plugin_dir%\ > nul
+if exist styles.css copy /Y styles.css %plugin_dir%\ > nul
 
 echo.
 echo =========================================

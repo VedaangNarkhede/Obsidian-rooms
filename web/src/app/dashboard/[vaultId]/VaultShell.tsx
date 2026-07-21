@@ -32,162 +32,188 @@ interface VaultShellProps {
     children: React.ReactNode;
 }
 
+const getBasename = (p: string) => {
+    let name = p.split('/').pop() || p;
+    if (name.endsWith('.md')) name = name.slice(0, -3);
+    return name;
+};
+
 export default function VaultShell({ vaultId, vaultName, notes, isOwner, children }: VaultShellProps) {
     const pathname = usePathname();
     const [isShareOpen, setIsShareOpen] = useState(false);
+    const [isGraphFullscreen, setIsGraphFullscreen] = useState(false);
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+    const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
     
     // Extract current note path from URL (e.g. /dashboard/vaultId/note/Folder/File.md -> Folder/File.md)
     let currentNotePath = '';
     const notePrefix = `/dashboard/${vaultId}/note/`;
     if (pathname && pathname.startsWith(notePrefix)) {
-        currentNotePath = decodeURI(pathname.substring(notePrefix.length));
+        currentNotePath = decodeURIComponent(pathname.substring(notePrefix.length));
     }
 
-    // --- VIRTUAL LINK TREE ALGORITHM ---
-    const treeData = useMemo(() => {
-        if (notes.length === 0) return [];
-
-        const roots: TreeNode[] = [];
-        const inDegree = new Map<string, number>();
-        const noteMap = new Map<string, MinimalNote>();
-
-        // Init
+    // Simple Folder Grouping
+    const groupedNotes = useMemo(() => {
+        if (notes.length === 0) return { rootNotes: [], folders: {} as Record<string, MinimalNote[]> };
+        const rootNotes: MinimalNote[] = [];
+        const folders: Record<string, MinimalNote[]> = {};
         for (const n of notes) {
-            inDegree.set(n.path, 0);
-            noteMap.set(n.path, n);
-        }
-
-        // Calculate In-Degrees
-        for (const n of notes) {
-            for (const target of n.outgoingLinks) {
-                if (inDegree.has(target)) {
-                    inDegree.set(target, (inDegree.get(target) || 0) + 1);
-                }
+            const parts = n.path.split('/');
+            if (parts.length > 1) {
+                const folder = parts[0];
+                if (!folders[folder]) folders[folder] = [];
+                folders[folder].push(n);
+            } else {
+                rootNotes.push(n);
             }
         }
-
-        // Find potential roots (0 incoming links, or named index/readme)
-        let startingPaths = notes.filter(n => {
-            const deg = inDegree.get(n.path) || 0;
-            const lower = n.path.toLowerCase();
-            const isIndex = lower.includes('index') || lower.includes('readme') || lower.includes('00');
-            return deg === 0 || isIndex;
-        }).map(n => n.path);
-
-        // Fallback: If no roots found (circular graph), just pick the first note
-        if (startingPaths.length === 0) {
-            startingPaths = [notes[0].path];
-        }
-
-        const getBasename = (p: string) => {
-            let name = p.split('/').pop() || p;
-            if (name.endsWith('.md')) name = name.slice(0, -3);
-            return name;
-        };
-
-        // DFS Traversal
-        const buildNode = (path: string, visitedPath: Set<string>): TreeNode | null => {
-            if (!noteMap.has(path)) return null;
-
-            // Cycle detection
-            if (visitedPath.has(path)) {
-                return {
-                    path,
-                    basename: `↺ ${getBasename(path)}`,
-                    isBackLink: true,
-                    children: []
-                };
-            }
-
-            const currentVisited = new Set(visitedPath);
-            currentVisited.add(path);
-
-            const note = noteMap.get(path)!;
-            const children: TreeNode[] = [];
-
-            for (const target of note.outgoingLinks) {
-                const childNode = buildNode(target, currentVisited);
-                if (childNode) children.push(childNode);
-            }
-
-            return {
-                path,
-                basename: getBasename(path),
-                isBackLink: false,
-                children
-            };
-        };
-
-        const globalVisited = new Set<string>(); // Keep track of rendered roots so we don't duplicate
         
-        for (const p of startingPaths) {
-            if (globalVisited.has(p)) continue;
-            const node = buildNode(p, new Set());
-            if (node) {
-                roots.push(node);
-                // Mark all children recursively as "globally visited" if we wanted a true partition, 
-                // but since it's a DAG/Graph, just rendering from the root is enough.
-                globalVisited.add(p);
-            }
+        // Sorting function
+        const sortNotes = (arr: MinimalNote[]) => {
+            return arr.sort((a, b) => {
+                const aName = getBasename(a.path).toLowerCase();
+                const bName = getBasename(b.path).toLowerCase();
+                if (aName === 'index') return -1;
+                if (bName === 'index') return 1;
+                return aName.localeCompare(bName);
+            });
+        };
+
+        // Sort root and folders
+        sortNotes(rootNotes);
+        for (const folder in folders) {
+            sortNotes(folders[folder]);
         }
 
-        return roots;
+        return { rootNotes, folders };
     }, [notes]);
 
-    // Recursive Tree Renderer
-    const renderTree = (nodes: TreeNode[], depth: number = 0) => {
+    const toggleFolder = (folder: string) => {
+        const newSet = new Set(expandedFolders);
+        if (newSet.has(folder)) newSet.delete(folder);
+        else newSet.add(folder);
+        setExpandedFolders(newSet);
+    };
+
+    // Render Folder Tree
+    const renderFolders = () => {
         return (
-            <ul className={styles.treeList} style={{ paddingLeft: depth === 0 ? '0' : '1rem' }}>
-                {nodes.map((node, i) => (
-                    <li key={`${node.path}-${i}`} className={styles.treeItem}>
+            <div className={styles.folderList}>
+                {groupedNotes.rootNotes.map((note, i) => (
+                    <div key={`${note.path}-${i}`} className={styles.treeItem} style={{ padding: '0 8px' }}>
                         <Link 
-                            href={`/dashboard/${vaultId}/note/${node.path}`}
-                            className={`${styles.treeLink} ${node.path === currentNotePath ? styles.active : ''} ${node.isBackLink ? styles.backlink : ''}`}
+                            href={`/dashboard/${vaultId}/note/${note.path.split('/').map(encodeURIComponent).join('/')}`}
+                            className={`${styles.treeLink} ${note.path === currentNotePath ? styles.active : ''}`}
+                            onClick={() => setIsLeftSidebarOpen(false)}
                         >
-                            {node.basename}
+                            {getBasename(note.path)}
                         </Link>
-                        {!node.isBackLink && node.children.length > 0 && (
-                            renderTree(node.children, depth + 1)
-                        )}
-                    </li>
+                    </div>
                 ))}
-            </ul>
+                {/* Folders (Sorted alphabetically) */}
+                {Object.keys(groupedNotes.folders).sort((a, b) => a.localeCompare(b)).map(folder => {
+                    const isExpanded = expandedFolders.has(folder);
+                    const folderNotes = groupedNotes.folders[folder];
+                    return (
+                        <div key={folder} className={styles.folderGroup}>
+                            <div 
+                                className={styles.folderHeader} 
+                                onClick={() => toggleFolder(folder)}
+                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                            >
+                                <span style={{ fontSize: '0.8rem', color: '#abb2bf', display: 'inline-block', width: '16px', textAlign: 'center' }}>{isExpanded ? '▼' : '▶'}</span>
+                                <span style={{ fontWeight: 500 }}>{folder}</span>
+                            </div>
+                            {isExpanded && (
+                                <ul className={styles.treeList}>
+                                    {folderNotes.map((note, i) => (
+                                        <li key={`${note.path}-${i}`} className={styles.treeItem}>
+                                            <Link 
+                                                href={`/dashboard/${vaultId}/note/${note.path.split('/').map(encodeURIComponent).join('/')}`}
+                                                className={`${styles.treeLink} ${note.path === currentNotePath ? styles.active : ''}`}
+                                                onClick={() => setIsLeftSidebarOpen(false)}
+                                            >
+                                                {getBasename(note.path)}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
         );
     };
 
     return (
         <div className={styles.shell}>
             {/* Left Sidebar: Virtual Tree */}
-            <aside className={styles.leftSidebar}>
-                <div className={styles.sidebarHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2>{vaultName}</h2>
-                    {isOwner && (
-                        <button 
-                            onClick={() => setIsShareOpen(true)}
-                            style={{ background: 'none', border: '1px solid #444', color: '#abb2bf', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.8rem' }}
-                        >
-                            Share
-                        </button>
-                    )}
+            <aside className={`${styles.leftSidebar} ${isLeftSidebarOpen ? styles.open : ''}`}>
+                <div className={styles.sidebarHeader} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <Link href={`/dashboard/${vaultId}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                            <h2>{vaultName}</h2>
+                        </Link>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {isOwner && (
+                                <button 
+                                    onClick={() => setIsShareOpen(true)}
+                                    style={{ background: 'none', border: '1px solid #444', color: '#abb2bf', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.8rem' }}
+                                >
+                                    Share
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
                 <div className={styles.sidebarContent}>
                     {notes.length === 0 ? (
                         <p className={styles.emptyMsg}>No notes in this vault.</p>
                     ) : (
-                        renderTree(treeData)
+                        renderFolders()
                     )}
                 </div>
             </aside>
 
             {/* Center Content: Markdown Viewer */}
-            <section className={styles.centerContent}>
+            <section className={styles.centerContent} onClick={() => {
+                if (isLeftSidebarOpen) setIsLeftSidebarOpen(false);
+                if (isRightSidebarOpen) setIsRightSidebarOpen(false);
+            }}>
+                <div className={styles.mobileToggleBar}>
+                    <button className={styles.mobileBtn} onClick={(e) => { e.stopPropagation(); setIsLeftSidebarOpen(!isLeftSidebarOpen); }}>
+                        ☰ Folders
+                    </button>
+                    <button className={styles.mobileBtn} onClick={(e) => { e.stopPropagation(); setIsRightSidebarOpen(!isRightSidebarOpen); }}>
+                        Graph ⤢
+                    </button>
+                </div>
                 {children}
             </section>
 
             {/* Right Sidebar: Local Graph */}
-            <aside className={styles.rightSidebar}>
-                <div className={styles.sidebarHeader}>
+            <aside className={`${styles.rightSidebar} ${isRightSidebarOpen ? styles.open : ''} ${isGraphFullscreen ? styles.fullscreenOverlay : ''}`}>
+                <div className={styles.sidebarHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h2>Local Graph</h2>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button 
+                            className={styles.mobileOnlyBtn}
+                            onClick={() => setIsRightSidebarOpen(false)}
+                            style={{ background: 'transparent', border: 'none', color: '#abb2bf', cursor: 'pointer', fontSize: '1rem', padding: '0 0.5rem' }}
+                            title="Close Graph"
+                        >
+                            ✕
+                        </button>
+                        <button 
+                            onClick={() => setIsGraphFullscreen(!isGraphFullscreen)}
+                            style={{ background: 'transparent', border: '1px solid #444', color: '#abb2bf', borderRadius: '4px', cursor: 'pointer', padding: '0.2rem 0.5rem' }}
+                            title="Toggle Fullscreen"
+                        >
+                            {isGraphFullscreen ? '⤢' : '⤢'}
+                        </button>
+                    </div>
                 </div>
                 <div className={styles.graphContainer}>
                     <LocalGraph 

@@ -39,6 +39,7 @@ export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName }:
     // Note Selection States
     const [isGrantAll, setIsGrantAll] = useState(true);
     const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
     
     // Editing state
     const [editingGrantId, setEditingGrantId] = useState<string | null>(null);
@@ -183,11 +184,46 @@ export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName }:
         }
     };
 
+    const handleToggleFolderCheckbox = (folderNotes: string[], checked: boolean) => {
+        const newSet = new Set(selectedPaths);
+        for (const note of folderNotes) {
+            if (checked) newSet.add(note);
+            else newSet.delete(note);
+        }
+        setSelectedPaths(newSet);
+        if (newSet.size === allNotes.length) setIsGrantAll(true);
+        else setIsGrantAll(false);
+    };
+
+    const toggleFolderExpand = (folder: string) => {
+        const newSet = new Set(expandedFolders);
+        if (newSet.has(folder)) newSet.delete(folder);
+        else newSet.add(folder);
+        setExpandedFolders(newSet);
+    };
+
+    const getBasename = (p: string) => {
+        let name = p.split('/').pop() || p;
+        if (name.endsWith('.md')) name = name.slice(0, -3);
+        return name;
+    };
+
     const filteredGrants = grants.filter(g => g.email.toLowerCase().includes(searchQuery.toLowerCase()));
     const totalPages = Math.ceil(filteredGrants.length / itemsPerPage);
     const paginatedGrants = filteredGrants.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const filteredNotes = allNotes.filter(n => n.toLowerCase().includes(noteSearchQuery.toLowerCase()));
+
+    const groupedNotes = React.useMemo(() => {
+        const groups: Record<string, string[]> = {};
+        for (const note of filteredNotes) {
+            const parts = note.split('/');
+            const folder = parts.length > 1 ? parts[0] : 'Root';
+            if (!groups[folder]) groups[folder] = [];
+            groups[folder].push(note);
+        }
+        return groups;
+    }, [filteredNotes]);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Share Vault">
@@ -243,16 +279,49 @@ export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName }:
                                 {filteredNotes.length === 0 ? (
                                     <p style={{ color: '#abb2bf', fontStyle: 'italic', fontSize: '0.9rem' }}>No notes found.</p>
                                 ) : (
-                                    filteredNotes.map(note => (
-                                        <label key={note} className={styles.noteItem}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selectedPaths.has(note)}
-                                                onChange={() => handleToggleNote(note)}
-                                            />
-                                            {note}
-                                        </label>
-                                    ))
+                                    Object.entries(groupedNotes).map(([folder, folderNotes]) => {
+                                        const isAllFolderChecked = folderNotes.every(note => selectedPaths.has(note));
+                                        const isSomeFolderChecked = !isAllFolderChecked && folderNotes.some(note => selectedPaths.has(note));
+                                        const isExpanded = expandedFolders.has(folder);
+
+                                        return (
+                                            <div key={folder} style={{ marginBottom: '0.5rem' }}>
+                                                <div className={styles.folderRow}>
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => toggleFolderExpand(folder)}
+                                                        className={styles.folderExpandBtn}
+                                                    >
+                                                        {isExpanded ? '▼' : '▶'}
+                                                    </button>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flex: 1 }}>
+                                                        <input 
+                                                            type="checkbox"
+                                                            checked={isAllFolderChecked}
+                                                            ref={el => { if (el) el.indeterminate = isSomeFolderChecked; }}
+                                                            onChange={(e) => handleToggleFolderCheckbox(folderNotes, e.target.checked)}
+                                                        />
+                                                        <span style={{ fontWeight: 'bold', color: '#61afef' }}>📁 {folder}</span>
+                                                    </label>
+                                                </div>
+                                                
+                                                {isExpanded && (
+                                                    <div style={{ paddingLeft: '2rem' }}>
+                                                        {folderNotes.map(note => (
+                                                            <label key={note} className={styles.noteItem}>
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    checked={selectedPaths.has(note)}
+                                                                    onChange={() => handleToggleNote(note)}
+                                                                />
+                                                                {getBasename(note)}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

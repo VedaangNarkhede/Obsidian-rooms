@@ -306,3 +306,66 @@
     background: rgba(97, 175, 239, 0.1);
     transform: translateY(-3px);
 }
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1rem;
+    }
+    .title {
+        font-size: 2.5rem;
+    }
+    .subtitle {
+        font-size: 1.1rem;
+    }
+    .featureSection {
+        padding: 4rem 1.5rem;
+        gap: 4rem;
+    }
+    .featureRow, .featureRowReverse {
+        flex-direction: column;
+        gap: 2rem;
+    }
+    .featureVisual {
+        height: 300px;
+        width: 100%;
+    }
+    .featureTitle {
+        font-size: 2rem;
+        text-align: center;
+    }
+    .featureDesc {
+        font-size: 1rem;
+        text-align: center;
+    }
+    .ctaSection {
+        padding: 4rem 1.5rem;
+    }
+    .ctaTitle {
+        font-size: 2rem;
+    }
+    .ctaButtons {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    .btnLarge {
+        width: 100%;
+        max-width: 300px;
+    }
+    .navLinks {
+        gap: 0.5rem;
+    }
+    .navBtn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    .readingMockup {
+        padding: 1.5rem;
+    }
+    .mockTitle {
+        font-size: 1.5rem;
+    }
+    .mockText {
+        font-size: 0.9rem;
+    }
+}

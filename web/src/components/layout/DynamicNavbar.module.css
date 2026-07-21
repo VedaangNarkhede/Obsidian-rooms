@@ -122,3 +122,41 @@
 .logoutLink:hover {
   color: #e06c75;
 }
+
+@media (max-width: 768px) {
+  .topNav {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .navLeft {
+    flex-direction: column;
+    width: 100%;
+    gap: 1rem;
+  }
+  
+  .tabsContainer {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .searchContainer {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .searchInput {
+    width: 100%;
+  }
+  
+  .navRight {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    border-top: 1px solid rgba(183, 203, 238, 0.1);
+    padding-top: 1rem;
+  }
+}

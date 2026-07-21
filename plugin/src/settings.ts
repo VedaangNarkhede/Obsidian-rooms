@@ -3,12 +3,10 @@ import ObsidianRoomsPlugin from './main';
 
 export interface ObsidianRoomsSettings {
 	apiKey: string; // Used only on mobile; desktop uses SecretStorage
-	targetVaultName: string;
 }
 
 export const DEFAULT_SETTINGS: ObsidianRoomsSettings = {
-	apiKey: '',
-	targetVaultName: ''
+	apiKey: ''
 }
 
 export class ObsidianRoomsSettingTab extends PluginSettingTab {
@@ -37,17 +35,5 @@ export class ObsidianRoomsSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-
-		new Setting(containerEl)
-			.setName('Target Vault Name')
-			.setDesc('The name of the remote vault on Obsidian Rooms you want to sync notes to (e.g. "My Notes").')
-			.addText(text => text
-				.setPlaceholder('e.g. My Notes')
-				.setValue(this.plugin.settings.targetVaultName)
-				.onChange(async (value) => {
-					this.plugin.settings.targetVaultName = value;
-					await this.plugin.saveSettings();
-				}));
-
 	}
 }

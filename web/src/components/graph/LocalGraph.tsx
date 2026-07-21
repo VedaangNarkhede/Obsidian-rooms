@@ -32,20 +32,36 @@ function LocalGraph({ currentNotePath, vaultId, notes }: LocalGraphProps) {
   const router = useRouter();
   const [dimensions, setDimensions] = useState({ width: 300, height: 400 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const fgRef = useRef<any>(null);
 
   useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
         setDimensions({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
         });
+        
+        // When dimensions change (e.g. going fullscreen), trigger a zoom to fit and adjust forces
+        if (fgRef.current) {
+          const isFullscreen = entry.contentRect.width > 500;
+          if (isFullscreen) {
+              fgRef.current.d3Force('link').distance(60);
+              fgRef.current.d3Force('charge').strength(-300);
+          } else {
+              fgRef.current.d3Force('link').distance(30);
+              fgRef.current.d3Force('charge').strength(-150);
+          }
+          fgRef.current.d3ReheatSimulation();
+          setTimeout(() => {
+             fgRef.current?.zoomToFit(400, 50);
+          }, 100);
+        }
       }
-    };
-    
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, []);
 
   const graphData = useMemo(() => {
@@ -60,13 +76,16 @@ function LocalGraph({ currentNotePath, vaultId, notes }: LocalGraphProps) {
         return name;
     };
 
+    const isFullscreen = dimensions.width > 500;
+    const scaleFactor = isFullscreen ? 1.5 : 1;
+
     // Find current note
     const currentNote = notes.find(n => n.path === currentNotePath);
     if (currentNote) {
         nodesMap.set(currentNote.path, {
             id: currentNote.path,
             name: getBasename(currentNote.path),
-            val: 20,
+            val: 20 * scaleFactor,
             color: '#e5c07b' // Current note highlighted
         });
 
@@ -77,7 +96,7 @@ function LocalGraph({ currentNotePath, vaultId, notes }: LocalGraphProps) {
                 nodesMap.set(target, {
                     id: target,
                     name: getBasename(target),
-                    val: 10,
+                    val: 10 * scaleFactor,
                     color: targetExists ? '#61afef' : '#555555' // Grey if missing
                 });
             }
@@ -89,7 +108,7 @@ function LocalGraph({ currentNotePath, vaultId, notes }: LocalGraphProps) {
         let i = 0;
         for (const n of notes) {
             if (i++ > 50) break;
-            nodesMap.set(n.path, { id: n.path, name: getBasename(n.path), val: 5, color: '#98c379' });
+            nodesMap.set(n.path, { id: n.path, name: getBasename(n.path), val: 5 * scaleFactor, color: '#98c379' });
         }
         // Only add links between nodes that actually exist in the preview map
         for (const n of notes) {
@@ -115,6 +134,7 @@ function LocalGraph({ currentNotePath, vaultId, notes }: LocalGraphProps) {
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
       <ForceGraph2D
+        ref={fgRef}
         width={dimensions.width}
         height={dimensions.height}
         graphData={graphData}
@@ -125,14 +145,19 @@ function LocalGraph({ currentNotePath, vaultId, notes }: LocalGraphProps) {
             if (node.color === '#555555') {
                 router.push(`/dashboard/${vaultId}/missing?path=${encodeURIComponent(node.name)}`);
             } else {
-                router.push(`/dashboard/${vaultId}/note/${encodeURI(node.id)}`);
+                const targetPath = node.id.split('/').map(encodeURIComponent).join('/');
+                router.push(`/dashboard/${vaultId}/note/${targetPath}`);
+            }
+        }}
+        onEngineStop={() => { 
+            if (fgRef.current) {
+                fgRef.current.zoomToFit(400, 50);
             }
         }}
         backgroundColor="#1e1e1e"
         linkDirectionalArrowLength={3.5}
         linkDirectionalArrowRelPos={1}
         cooldownTicks={100}
-        onEngineStop={() => { /* stops physics engine after 100 ticks */ }}
         nodeCanvasObject={(node: any, ctx, globalScale) => {
           const label = node.name;
           const fontSize = 12/globalScale;

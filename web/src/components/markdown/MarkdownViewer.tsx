@@ -37,8 +37,8 @@ export function MarkdownViewer({ content, attachmentMap = {}, vaultId, vaultNote
                     a({ node, href, children, ...props }: any) {
                         // If it's a relative link (like a note), route it through the dashboard
                         if (vaultId && href && !href.startsWith('http') && !href.startsWith('#')) {
-                            // Decode URI because href might be Note%202.md
-                            const decodedHref = decodeURI(href);
+                            // Decode URI component because href might contain encoded characters like %2B (+)
+                            const decodedHref = decodeURIComponent(href);
                             const linkBasename = decodedHref.split('/').pop() || decodedHref;
                             
                             // Find the exact path in the vault
@@ -68,15 +68,14 @@ export function MarkdownViewer({ content, attachmentMap = {}, vaultId, vaultNote
                                 }
                             }
                             
-                            return <Link href={`/dashboard/${vaultId}/note/${encodeURI(finalPath)}`} {...props}>{children}</Link>;
+                            return <Link href={`/dashboard/${vaultId}/note/${finalPath.split('/').map(encodeURIComponent).join('/')}`} {...props}>{children}</Link>;
                         }
                         return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
                     },
                     code({ node, inline, className, children, ...props }: any) {
                         const match = /language-(\w+)/.exec(className || '');
-                        
                         if (!inline && match && match[1] === 'mermaid') {
-                            return <MermaidGraph chart={String(children).replace(/\n$/, '')} />;
+                            return <MermaidGraph chart={String(children).replace(/\r/g, '').replace(/\n$/, '')} />;
                         }
 
                         return !inline && match ? (

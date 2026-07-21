@@ -57,7 +57,7 @@ export default function Home() {
                 {/* Feature 1: Interactive Graph */}
                 <div className={styles.featureRow}>
                     <div className={styles.featureVisual}>
-                        <svg width="100%" height="100%" viewBox="0 0 400 400">
+                        <svg width="100%" height="100%" viewBox="50 50 300 300">
                             {/* Edges */}
                             <line x1="200" y1="200" x2="100" y2="100" stroke="#5c6370" strokeWidth="2" />
                             <line x1="200" y1="200" x2="300" y2="300" stroke="#5c6370" strokeWidth="2" />

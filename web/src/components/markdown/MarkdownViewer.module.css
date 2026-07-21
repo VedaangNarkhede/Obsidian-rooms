@@ -150,4 +150,22 @@
   border-radius: 8px !important;
   background-color: var(--code-bg) !important;
   border: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .markdownContainer {
+    padding: 1rem;
+    font-size: 15px;
+  }
+  
+  .markdownContainer h1 { font-size: 1.8rem; }
+  .markdownContainer h2 { font-size: 1.5rem; }
+  .markdownContainer h3 { font-size: 1.25rem; }
+  
+  .markdownContainer table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
