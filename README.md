@@ -1,9 +1,5 @@
 Obsidian Rooms bridges the gap between your local private vault and the web. By utilizing an official Obsidian desktop plugin alongside a high-performance Next.js dashboard, you can securely sync select notes to the cloud. Your notes are encrypted with a Master Key *locally* on your machine before they are ever transmitted, meaning your data remains completely private.
 
-<div align="center">
-  <img src="https://obsidian-rooms.vercel.app/favicon.ico" alt="Preview" width="800" style="border-radius: 8px;" />
-</div>
-
 ## ✨ Features
 
 - 🔒 **Zero-Knowledge Encryption**: Notes are encrypted locally via WebCrypto API (AES-GCM 256) before uploading. Only you (and those you share your Master Key with) can decrypt the contents.
