@@ -123,6 +123,101 @@
   color: #e06c75;
 }
 
+/* Profile Dropdown */
+.profileContainer {
+  position: relative;
+}
+
+.profileBtn {
+  background: transparent;
+  border: none;
+  color: #abb2bf;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.profileBtn:hover, .profileBtn[data-active="true"] {
+  background-color: #282c34;
+  color: #fff;
+}
+
+.profileAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #61afef;
+  color: #1e1e1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: #1e1e1e;
+  border: 1px solid #3e4451;
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  z-index: 100;
+}
+
+.dropdownUserInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #3e4451;
+}
+
+.dropdownUsername {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.dropdownEmail {
+  color: #abb2bf;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.dropdownLink {
+  color: #abb2bf;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.dropdownLink:hover {
+  color: #61afef;
+}
+
+.logoutLink {
+  color: #e06c75;
+}
+
+.logoutLink:hover {
+  color: #be5046;
+}
+
 @media (max-width: 768px) {
   .topNav {
     flex-direction: column;
@@ -137,15 +232,27 @@
     gap: 1rem;
   }
   
+  .mobileProfileWrapper {
+    display: block !important;
+  }
+  
   .tabsContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
     width: 100%;
+  }
+
+  .tab {
     justify-content: center;
-    flex-wrap: wrap;
+    text-align: center;
+    padding: 0.6rem;
   }
   
   .searchContainer {
     margin-left: 0;
     width: 100%;
+    order: 3;
   }
   
   .searchInput {
@@ -153,10 +260,27 @@
   }
   
   .navRight {
+    display: none; /* Hide on mobile, handled in tabsContainer */
+  }
+
+  .profileContainer {
+    width: 100%;
+  }
+
+  .profileBtn {
     width: 100%;
     justify-content: center;
-    flex-wrap: wrap;
-    border-top: 1px solid rgba(183, 203, 238, 0.1);
-    padding-top: 1rem;
+    background-color: #282c34;
+    border: 1px solid transparent;
+  }
+
+  .profileBtn[data-active="true"] {
+    border-color: #61afef;
+  }
+
+  .dropdownMenu {
+    right: auto;
+    left: 0;
+    width: 100%;
   }
 }

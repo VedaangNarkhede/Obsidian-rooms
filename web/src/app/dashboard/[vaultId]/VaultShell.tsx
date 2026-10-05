@@ -29,6 +29,7 @@ interface VaultShellProps {
     vaultName: string;
     notes: MinimalNote[];
     isOwner: boolean;
+    isPublic: boolean;
     children: React.ReactNode;
 }
 
@@ -38,13 +39,16 @@ const getBasename = (p: string) => {
     return name;
 };
 
-export default function VaultShell({ vaultId, vaultName, notes, isOwner, children }: VaultShellProps) {
+export default function VaultShell({ vaultId, vaultName, notes, isOwner, isPublic, children }: VaultShellProps) {
     const pathname = usePathname();
     const [isShareOpen, setIsShareOpen] = useState(false);
     const [isGraphFullscreen, setIsGraphFullscreen] = useState(false);
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+    
+    const [isLeftDesktopCollapsed, setIsLeftDesktopCollapsed] = useState(false);
+    const [isRightDesktopCollapsed, setIsRightDesktopCollapsed] = useState(false);
     
     // Extract current note path from URL (e.g. /dashboard/vaultId/note/Folder/File.md -> Folder/File.md)
     let currentNotePath = '';
@@ -150,21 +154,29 @@ export default function VaultShell({ vaultId, vaultName, notes, isOwner, childre
     return (
         <div className={styles.shell}>
             {/* Left Sidebar: Virtual Tree */}
-            <aside className={`${styles.leftSidebar} ${isLeftSidebarOpen ? styles.open : ''}`}>
+            <aside className={`${styles.leftSidebar} ${isLeftSidebarOpen ? styles.open : ''} ${isLeftDesktopCollapsed ? styles.collapsed : ''}`}>
                 <div className={styles.sidebarHeader} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                        <Link href={`/dashboard/${vaultId}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        <Link href={`/dashboard/${vaultId}`} style={{ color: 'inherit', textDecoration: 'none' }} className={styles.vaultTitleText}>
                             <h2>{vaultName}</h2>
                         </Link>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', width: isLeftDesktopCollapsed ? '100%' : 'auto', justifyContent: isLeftDesktopCollapsed ? 'center' : 'flex-end' }}>
                             {isOwner && (
                                 <button 
+                                    className={styles.sidebarShareBtn}
                                     onClick={() => setIsShareOpen(true)}
                                     style={{ background: 'none', border: '1px solid #444', color: '#abb2bf', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.8rem' }}
                                 >
                                     Share
                                 </button>
                             )}
+                            <button 
+                                onClick={() => setIsLeftDesktopCollapsed(!isLeftDesktopCollapsed)}
+                                style={{ background: 'transparent', border: '1px solid #444', color: '#abb2bf', borderRadius: '4px', cursor: 'pointer', padding: '0.2rem 0.5rem' }}
+                                title={isLeftDesktopCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                            >
+                                {isLeftDesktopCollapsed ? '❯' : '❮'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -194,28 +206,39 @@ export default function VaultShell({ vaultId, vaultName, notes, isOwner, childre
             </section>
 
             {/* Right Sidebar: Local Graph */}
-            <aside className={`${styles.rightSidebar} ${isRightSidebarOpen ? styles.open : ''} ${isGraphFullscreen ? styles.fullscreenOverlay : ''}`}>
-                <div className={styles.sidebarHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2>Local Graph</h2>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <aside className={`${styles.rightSidebar} ${isRightSidebarOpen ? styles.open : ''} ${isGraphFullscreen ? styles.fullscreenOverlay : ''} ${isRightDesktopCollapsed ? styles.collapsed : ''}`}>
+                <div className={styles.sidebarHeader} style={{ display: 'flex', justifyContent: isRightDesktopCollapsed ? 'center' : 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <button 
-                            className={styles.mobileOnlyBtn}
-                            onClick={() => setIsRightSidebarOpen(false)}
-                            style={{ background: 'transparent', border: 'none', color: '#abb2bf', cursor: 'pointer', fontSize: '1rem', padding: '0 0.5rem' }}
-                            title="Close Graph"
-                        >
-                            ✕
-                        </button>
-                        <button 
-                            onClick={() => setIsGraphFullscreen(!isGraphFullscreen)}
+                            onClick={() => setIsRightDesktopCollapsed(!isRightDesktopCollapsed)}
                             style={{ background: 'transparent', border: '1px solid #444', color: '#abb2bf', borderRadius: '4px', cursor: 'pointer', padding: '0.2rem 0.5rem' }}
-                            title="Toggle Fullscreen"
+                            title={isRightDesktopCollapsed ? "Expand Graph" : "Collapse Graph"}
                         >
-                            {isGraphFullscreen ? '⤢' : '⤢'}
+                            {isRightDesktopCollapsed ? '❮' : '❯'}
                         </button>
+                        {!isRightDesktopCollapsed && <h2 className={styles.rightTitleText}>Local Graph</h2>}
                     </div>
+                    {!isRightDesktopCollapsed && (
+                        <div className={styles.rightHeaderActions} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <button 
+                                className={styles.mobileOnlyBtn}
+                                onClick={() => setIsRightSidebarOpen(false)}
+                                style={{ background: 'transparent', border: 'none', color: '#abb2bf', cursor: 'pointer', fontSize: '1rem', padding: '0 0.5rem' }}
+                                title="Close Graph"
+                            >
+                                ✕
+                            </button>
+                            <button 
+                                onClick={() => setIsGraphFullscreen(!isGraphFullscreen)}
+                                style={{ background: 'transparent', border: '1px solid #444', color: '#abb2bf', borderRadius: '4px', cursor: 'pointer', padding: '0.2rem 0.5rem' }}
+                                title="Toggle Fullscreen"
+                            >
+                                {isGraphFullscreen ? '⤢' : '⤢'}
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <div className={styles.graphContainer}>
+                <div className={styles.graphContainer} style={{ display: isRightDesktopCollapsed ? 'none' : 'block' }}>
                     <LocalGraph 
                         currentNotePath={currentNotePath} 
                         vaultId={vaultId} 
@@ -230,6 +253,7 @@ export default function VaultShell({ vaultId, vaultName, notes, isOwner, childre
                 onClose={() => setIsShareOpen(false)} 
                 vaultId={vaultId} 
                 vaultName={vaultName} 
+                initialIsPublic={isPublic}
             />
         </div>
     );

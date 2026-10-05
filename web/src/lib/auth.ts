@@ -81,10 +81,10 @@ export async function verifyVaultAccess(vaultId: string, user: any) {
         }
     });
 
-    if (!vault) return { authorized: false, isOwner: false, allowedPaths: null as string[] | null };
+    if (!vault) return { authorized: false, isOwner: false, allowedPaths: null as string[] | null, vault };
     
     if (vault.userId === user.id) {
-        return { authorized: true, isOwner: true, allowedPaths: null };
+        return { authorized: true, isOwner: true, allowedPaths: null, vault };
     }
     
     if (vault.grants.length > 0) {
@@ -97,8 +97,12 @@ export async function verifyVaultAccess(vaultId: string, user: any) {
                 allowedPaths = [];
             }
         }
-        return { authorized: true, isOwner: false, allowedPaths };
+        return { authorized: true, isOwner: false, allowedPaths, vault };
     }
     
-    return { authorized: false, isOwner: false, allowedPaths: null };
+    if (vault.isPublic) {
+        return { authorized: true, isOwner: false, allowedPaths: null, vault };
+    }
+    
+    return { authorized: false, isOwner: false, allowedPaths: null, vault };
 }

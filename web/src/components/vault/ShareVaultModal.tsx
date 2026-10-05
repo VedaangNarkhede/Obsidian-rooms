@@ -17,9 +17,12 @@ interface ShareVaultModalProps {
     onClose: () => void;
     vaultId: string;
     vaultName: string;
+    initialIsPublic: boolean;
 }
 
-export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName }: ShareVaultModalProps) {
+export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName, initialIsPublic }: ShareVaultModalProps) {
+    const [isPublic, setIsPublic] = useState(initialIsPublic);
+    const [isChangingVisibility, setIsChangingVisibility] = useState(false);
     const [grants, setGrants] = useState<Grant[]>([]);
     const [allNotes, setAllNotes] = useState<string[]>([]);
     
@@ -47,12 +50,34 @@ export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName }:
     const itemsPerPage = 3;
 
     useEffect(() => {
+        setIsPublic(initialIsPublic);
+    }, [initialIsPublic]);
+
+    useEffect(() => {
         if (isOpen) {
             fetchGrants();
             fetchNotes();
             resetForm();
         }
     }, [isOpen]);
+
+    const handleToggleVisibility = async () => {
+        setIsChangingVisibility(true);
+        try {
+            const res = await fetch(`/api/vaults/${vaultId}/visibility`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isPublic: !isPublic })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setIsPublic(data.isPublic);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        setIsChangingVisibility(false);
+    };
 
     const resetForm = () => {
         setStep(0);
@@ -227,11 +252,50 @@ export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName }:
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Share Vault">
-            <p style={{ color: '#abb2bf', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-                Grant users access to <strong>{vaultName}</strong>.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <p style={{ color: '#abb2bf', margin: 0, lineHeight: '1.5' }}>
+                    Grant users access to <strong>{vaultName}</strong>.
+                </p>
+                <button 
+                    onClick={handleToggleVisibility}
+                    disabled={isChangingVisibility}
+                    style={{ 
+                        background: isPublic ? '#e06c75' : '#98c379',
+                        color: '#1e1e1e',
+                        border: 'none',
+                        padding: '0.4rem 0.8rem',
+                        borderRadius: '4px',
+                        fontWeight: 'bold',
+                        cursor: isChangingVisibility ? 'not-allowed' : 'pointer',
+                        fontSize: '0.85rem',
+                        opacity: isChangingVisibility ? 0.7 : 1
+                    }}
+                >
+                    {isPublic ? 'Make Private' : 'Make Public'}
+                </button>
+            </div>
             
-            <div className={styles.formContainer}>
+            {isPublic ? (
+                <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}>
+                    <h3 style={{ color: '#98c379', marginBottom: '1rem' }}>Vault is Public!</h3>
+                    <p style={{ color: '#abb2bf', marginBottom: '1.5rem' }}>Anyone with this link can view the vault.</p>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center' }}>
+                        <input 
+                            readOnly 
+                            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard/${vaultId}`}
+                            style={{ padding: '0.6rem', borderRadius: '4px', border: '1px solid #444', backgroundColor: '#282c34', color: '#fff', width: '100%', maxWidth: '300px' }}
+                        />
+                        <button 
+                            onClick={() => navigator.clipboard.writeText(`${window.location.origin}/dashboard/${vaultId}`)}
+                            style={{ background: '#61afef', border: 'none', color: '#1e1e1e', padding: '0.6rem 1rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <>
+                <div className={styles.formContainer}>
                 {step === 0 ? (
                     <form onSubmit={handleNextStep} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         <h3 style={{ color: '#e5c07b', margin: 0, fontSize: '1.1rem' }}>Add User</h3>
@@ -425,6 +489,8 @@ export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName }:
                     </div>
                 )}
             </div>
+            </>
+            )}
         </Modal>
     );
 }

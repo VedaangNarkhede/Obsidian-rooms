@@ -12,6 +12,7 @@ interface Vault {
     nickname: string | null;
     isSharedByMe: boolean;
     isGrantedToMe: boolean;
+    isPublicView?: boolean;
 }
 
 export default function DashboardClient({ allVaults }: { allVaults: Vault[] }) {
@@ -32,9 +33,11 @@ export default function DashboardClient({ allVaults }: { allVaults: Vault[] }) {
     let filteredVaults = allVaults;
 
     if (currentTab === 'my_vaults') {
-        filteredVaults = filteredVaults.filter(v => !v.isGrantedToMe);
+        filteredVaults = filteredVaults.filter(v => !v.isGrantedToMe && !v.isPublicView);
     } else if (currentTab === 'shared') {
         filteredVaults = filteredVaults.filter(v => v.isGrantedToMe);
+    } else if (currentTab === 'public') {
+        filteredVaults = filteredVaults.filter(v => v.isPublicView);
     }
 
     if (showOnlyShared) {
@@ -104,7 +107,7 @@ export default function DashboardClient({ allVaults }: { allVaults: Vault[] }) {
         <div className={styles.container}>
             <div className={styles.header}>
                 <h1 className={styles.title}>
-                    {currentTab === 'my_vaults' ? 'My Vaults' : currentTab === 'shared' ? 'Shared with Me' : 'Dashboard Overview'}
+                    {currentTab === 'my_vaults' ? 'My Vaults' : currentTab === 'shared' ? 'Shared with Me' : currentTab === 'public' ? 'Public Vaults Seen' : 'Dashboard Overview'}
                 </h1>
                 
                 {currentTab === 'my_vaults' && (
@@ -153,7 +156,7 @@ export default function DashboardClient({ allVaults }: { allVaults: Vault[] }) {
                             </div>
                             
                             <div className={styles.vaultActions}>
-                                {!v.isGrantedToMe && (
+                                {!v.isGrantedToMe && !v.isPublicView && (
                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                         {editingVaultName === v.id ? (
                                             <div className={styles.editRow}>
@@ -190,7 +193,7 @@ export default function DashboardClient({ allVaults }: { allVaults: Vault[] }) {
                                     </div>
                                 )}
                             
-                                {v.isGrantedToMe && (
+                                {(v.isGrantedToMe || v.isPublicView) && (
                                 <div>
                                     {editingNickname === v.id ? (
                                         <div className={styles.editRow}>

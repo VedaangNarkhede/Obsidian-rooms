@@ -11,19 +11,24 @@ export default async function VaultLayout({ children, params }: { children: Reac
 
     const { vaultId } = await params;
 
-    const vault = await prisma.vault.findUnique({
-        where: { id: vaultId }
-    });
+    const [authResult, notes] = await Promise.all([
+        verifyVaultAccess(vaultId, session.user),
+        prisma.note.findMany({
+            where: { vaultId },
+            include: { outgoingLinks: true }
+        })
+    ]);
 
-    if (!vault) redirect('/dashboard');
+    const { authorized, isOwner, allowedPaths, vault: authVault } = authResult;
+    if (!authorized || !authVault) redirect('/dashboard');
 
-    const { authorized, isOwner, allowedPaths } = await verifyVaultAccess(vaultId, session.user);
-    if (!authorized) redirect('/dashboard');
-
-    const notes = await prisma.note.findMany({
-        where: { vaultId },
-        include: { outgoingLinks: true }
-    });
+    if (authVault.isPublic && !isOwner) {
+        await prisma.publicVaultView.upsert({
+            where: { userId_vaultId: { userId: session.user.id, vaultId } },
+            update: { viewedAt: new Date() },
+            create: { userId: session.user.id, vaultId }
+        });
+    }
 
     const accessibleNotes = allowedPaths ? notes.filter(n => allowedPaths.includes(n.path)) : notes;
 
@@ -35,7 +40,7 @@ export default async function VaultLayout({ children, params }: { children: Reac
     }));
 
     return (
-        <VaultShell vaultId={vaultId} vaultName={vault.name} notes={minimalNotes} isOwner={isOwner}>
+        <VaultShell vaultId={vaultId} vaultName={authVault.name} notes={minimalNotes} isOwner={isOwner} isPublic={authVault.isPublic}>
             {children}
         </VaultShell>
     );

@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-rooms",
+	"name": "Obsidian Rooms",
+	"version": "1.0.0",
+	"minAppVersion": "1.11.4",
+	"description": "Selective, revocable, read-only sharing of Obsidian notes via invite-based vaults.",
+	"author": "Vedaang",
+	"authorUrl": "",
+	"isDesktopOnly": false
+}

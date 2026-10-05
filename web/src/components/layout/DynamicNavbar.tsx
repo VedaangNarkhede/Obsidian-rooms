@@ -15,9 +15,10 @@ interface DynamicNavbarProps {
     vaults: VaultDisplay[];
     ownedVaultIds: string[];
     username: string;
+    email: string;
 }
 
-export default function DynamicNavbar({ vaults, ownedVaultIds, username }: DynamicNavbarProps) {
+export default function DynamicNavbar({ vaults, ownedVaultIds, username, email }: DynamicNavbarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -99,6 +100,7 @@ export default function DynamicNavbar({ vaults, ownedVaultIds, username }: Dynam
     let tabs = [];
     
     const myVaultsTab = { id: 'my_vaults', label: 'My Vaults', active: currentTab === 'my_vaults' && !openedVaultId, isOpenedVault: false, link: '' };
+    const publicTab = { id: 'public', label: 'Public Vaults Seen', active: currentTab === 'public' && !openedVaultId, isOpenedVault: false, link: '' };
     const sharedTab = { id: 'shared', label: 'Shared with Me', active: currentTab === 'shared' && !openedVaultId, isOpenedVault: false, link: '' };
     
     // Only show valid recent vaults that exist in the list
@@ -122,15 +124,57 @@ export default function DynamicNavbar({ vaults, ownedVaultIds, username }: Dynam
     if (openedVaultId && openedVaultId !== 'settings') {
         const currentlyOpenedIsShared = isShared(openedVaultId);
         if (currentlyOpenedIsShared) {
-            // Replace Shared with Me -> [My Vaults, Opened Vaults]
-            tabs = [myVaultsTab, ...renderedRecent];
+            tabs = [myVaultsTab, publicTab, ...renderedRecent];
         } else {
-            // Replace My Vaults -> [Opened Vaults, Shared with Me]
-            tabs = [...renderedRecent, sharedTab];
+            tabs = [...renderedRecent, publicTab, sharedTab];
         }
     } else {
-        tabs = [myVaultsTab, sharedTab];
+        tabs = [myVaultsTab, publicTab, sharedTab];
     }
+
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClick = (e: MouseEvent) => {
+            if (!(e.target as Element).closest(`.${styles.profileContainer}`)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('click', handleClick);
+        return () => document.removeEventListener('click', handleClick);
+    }, []);
+
+    const renderProfileMenu = (isMobile: boolean = false) => (
+        <div className={styles.profileContainer}>
+            <button 
+                className={`${isMobile ? styles.tab : styles.profileBtn}`}
+                onClick={(e) => { e.stopPropagation(); setIsProfileOpen(!isProfileOpen); }}
+                data-active={isProfileOpen}
+            >
+                {!isMobile && (
+                    <div className={styles.profileAvatar}>
+                        {username ? username.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                )}
+                Profile {isProfileOpen ? '▲' : '▼'}
+            </button>
+            {isProfileOpen && (
+                <div className={styles.dropdownMenu}>
+                    <div className={styles.dropdownUserInfo}>
+                        <span className={styles.dropdownUsername}>{username}</span>
+                        <span className={styles.dropdownEmail}>{email}</span>
+                    </div>
+                    <Link href="/dashboard/settings" className={styles.dropdownLink} onClick={() => setIsProfileOpen(false)}>
+                        Settings
+                    </Link>
+                    <Link href="/api/auth/signout" className={`${styles.dropdownLink} ${styles.logoutLink}`} onClick={() => setIsProfileOpen(false)}>
+                        Sign Out
+                    </Link>
+                </div>
+            )}
+        </div>
+    );
 
     return (
         <header className={styles.topNav}>
@@ -155,6 +199,9 @@ export default function DynamicNavbar({ vaults, ownedVaultIds, username }: Dynam
                             </button>
                         )
                     ))}
+                    <div className={styles.mobileProfileWrapper} style={{ display: 'none' }}>
+                        {renderProfileMenu(true)}
+                    </div>
                 </div>
 
                 <div className={styles.searchContainer}>
@@ -169,9 +216,7 @@ export default function DynamicNavbar({ vaults, ownedVaultIds, username }: Dynam
             </div>
 
             <div className={styles.navRight}>
-                <span className={styles.username}>{username}</span>
-                <Link href="/dashboard/settings" className={styles.settingsLink}>Settings</Link>
-                <Link href="/api/auth/signout" className={styles.logoutLink}>Sign Out</Link>
+                {renderProfileMenu()}
             </div>
         </header>
     );

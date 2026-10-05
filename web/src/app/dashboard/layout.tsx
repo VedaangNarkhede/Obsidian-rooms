@@ -34,7 +34,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <DynamicNavbar 
                 vaults={allVaults} 
                 ownedVaultIds={ownedVaultIds} 
-                username={session.user.name || session.user.email || 'User'} 
+                username={session.user.name || (session.user as any).username || 'User'} 
+                email={session.user.email || ''}
             />
 
             <main className={styles.mainContent}>

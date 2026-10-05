@@ -18,6 +18,7 @@ model User {
   vaults        Vault[]
   apiKeys       ApiKey[]
   preferences   VaultPreference[]
+  publicViews   PublicVaultView[]
 }
 
 model ApiKey {
@@ -36,12 +37,25 @@ model Vault {
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+  isPublic   Boolean     @default(false)
   notes       Note[]
   grants      Grant[]
   shareLinks  ShareLink[]
   preferences VaultPreference[]
+  publicViews PublicVaultView[]
 
   @@unique([userId, name])
+}
+
+model PublicVaultView {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vaultId   String
+  vault     Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now())
+
+  @@unique([userId, vaultId])
 }
 
 model Note {

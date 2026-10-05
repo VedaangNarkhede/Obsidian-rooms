@@ -13,21 +13,24 @@ export default async function NotePage({ params }: { params: Promise<{ vaultId: 
     const { vaultId, path } = await params;
     const notePath = decodeURIComponent(path.join('/'));
 
-    const { authorized, isOwner, allowedPaths } = await verifyVaultAccess(vaultId, session?.user);
+    // Run independent database queries concurrently
+    const [authResult, note, allNotes] = await Promise.all([
+        verifyVaultAccess(vaultId, session?.user),
+        prisma.note.findUnique({
+            where: { vaultId_path: { vaultId, path: notePath } },
+            include: { attachments: { include: { attachment: true } }, vault: true }
+        }),
+        prisma.note.findMany({
+            where: { vaultId },
+            select: { path: true }
+        })
+    ]);
+
+    const { authorized, isOwner, allowedPaths } = authResult;
+
     if (!authorized) return notFound();
-
-    if (allowedPaths && !allowedPaths.includes(notePath)) {
-        return notFound();
-    }
-
-    const note = await prisma.note.findUnique({
-        where: { vaultId_path: { vaultId, path: notePath } },
-        include: { attachments: { include: { attachment: true } }, vault: true }
-    });
-
-    if (!note) {
-        return notFound();
-    }
+    if (allowedPaths && !allowedPaths.includes(notePath)) return notFound();
+    if (!note) return notFound();
 
     const masterKey = process.env.MASTER_KEY;
     if (!masterKey) throw new Error("MASTER_KEY is not configured.");
@@ -44,7 +47,6 @@ export default async function NotePage({ params }: { params: Promise<{ vaultId: 
         );
     }
 
-    // Build the attachment map for images: { "image.png": "https://cloudinary..." }
     const attachmentMap: Record<string, string> = {};
     for (const na of note.attachments) {
         if (na.filename && na.attachment.url) {
@@ -52,11 +54,6 @@ export default async function NotePage({ params }: { params: Promise<{ vaultId: 
         }
     }
 
-    // Fetch all notes for this vault to resolve absolute paths for links
-    const allNotes = await prisma.note.findMany({
-        where: { vaultId },
-        select: { path: true }
-    });
     const vaultNotes = allNotes.map(n => n.path);
 
     return (
