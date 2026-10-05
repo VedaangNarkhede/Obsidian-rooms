@@ -13,6 +13,7 @@ interface Vault {
     isSharedByMe: boolean;
     isGrantedToMe: boolean;
     isPublicView?: boolean;
+    isPublic?: boolean;
 }
 
 export default function DashboardClient({ allVaults }: { allVaults: Vault[] }) {
@@ -146,11 +147,23 @@ export default function DashboardClient({ allVaults }: { allVaults: Vault[] }) {
                                     >
                                         {v.nickname || v.name}
                                     </Link>
-                                    {v.isSharedByMe && (
-                                        <span style={{ backgroundColor: '#61afef', color: '#282c34', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '12px', fontWeight: 'bold' }}>
-                                            Shared
-                                        </span>
-                                    )}
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        {!v.isPublic && (
+                                            <span style={{ backgroundColor: '#e06c75', color: '#282c34', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '12px', fontWeight: 'bold' }}>
+                                                Private
+                                            </span>
+                                        )}
+                                        {v.isSharedByMe && (
+                                            <span style={{ backgroundColor: '#61afef', color: '#282c34', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '12px', fontWeight: 'bold' }}>
+                                                Shared
+                                            </span>
+                                        )}
+                                        {v.isPublic && (
+                                            <span style={{ backgroundColor: '#98c379', color: '#282c34', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '12px', fontWeight: 'bold' }}>
+                                                Public
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 {v.nickname && <span style={{ fontSize: '0.85rem', color: '#5c6370' }}>Original: {v.name}</span>}
                             </div>

@@ -21,7 +21,8 @@ export async function PATCH(
             id: vaultId,
             OR: [
                 { userId: (session.user as any).id },
-                { grants: { some: { email: session.user.email || '' } } }
+                { grants: { some: { email: session.user.email || '' } } },
+                { isPublic: true }
             ]
         }
     });

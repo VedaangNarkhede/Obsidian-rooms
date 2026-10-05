@@ -23,6 +23,7 @@ interface ShareVaultModalProps {
 export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName, initialIsPublic }: ShareVaultModalProps) {
     const [isPublic, setIsPublic] = useState(initialIsPublic);
     const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     const [grants, setGrants] = useState<Grant[]>([]);
     const [allNotes, setAllNotes] = useState<string[]>([]);
     
@@ -286,10 +287,23 @@ export default function ShareVaultModal({ isOpen, onClose, vaultId, vaultName, i
                             style={{ padding: '0.6rem', borderRadius: '4px', border: '1px solid #444', backgroundColor: '#282c34', color: '#fff', width: '100%', maxWidth: '300px' }}
                         />
                         <button 
-                            onClick={() => navigator.clipboard.writeText(`${window.location.origin}/dashboard/${vaultId}`)}
-                            style={{ background: '#61afef', border: 'none', color: '#1e1e1e', padding: '0.6rem 1rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                            onClick={() => {
+                                navigator.clipboard.writeText(`${window.location.origin}/dashboard/${vaultId}`);
+                                setIsCopied(true);
+                                setTimeout(() => setIsCopied(false), 2000);
+                            }}
+                            style={{ 
+                                background: isCopied ? '#98c379' : '#61afef', 
+                                border: 'none', 
+                                color: '#1e1e1e', 
+                                padding: '0.6rem 1rem', 
+                                borderRadius: '4px', 
+                                fontWeight: 'bold', 
+                                cursor: 'pointer',
+                                transition: 'background 0.3s ease'
+                            }}
                         >
-                            Copy
+                            {isCopied ? 'Copied!' : 'Copy'}
                         </button>
                     </div>
                 </div>

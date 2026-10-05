@@ -34,7 +34,8 @@ export default async function GlobalDashboardEmptyState() {
             nickname: prefMap.get(v.id) || null,
             isSharedByMe: v.grants.length > 0,
             isGrantedToMe: false,
-            isPublicView: false
+            isPublicView: false,
+            isPublic: v.isPublic
         })),
         ...grantedVaults.map(v => ({
             id: v.id,
@@ -42,7 +43,8 @@ export default async function GlobalDashboardEmptyState() {
             nickname: prefMap.get(v.id) || null,
             isSharedByMe: false,
             isGrantedToMe: true,
-            isPublicView: false
+            isPublicView: false,
+            isPublic: v.isPublic
         })),
         ...publicViews.map(pv => ({
             id: pv.vault.id,
@@ -50,7 +52,8 @@ export default async function GlobalDashboardEmptyState() {
             nickname: prefMap.get(pv.vault.id) || null,
             isSharedByMe: false,
             isGrantedToMe: false,
-            isPublicView: true
+            isPublicView: true,
+            isPublic: pv.vault.isPublic
         }))
     ];
 
